@@ -1,0 +1,43 @@
+---
+# install custom module for podamn images and container
+# ansible-galaxy collection install containers.podman
+# for image use module --> containers.podman.podman_image.
+# for container use module --> containers.podman.podman_container
+
+ - name: Playbook for Configure podman and deploy webapp
+   hosts: all
+   tasks:
+           - name: installing podman
+             package:
+                     name: podman
+                     state: latest
+
+           - name: pulling httpd image from Docker Hub
+             containers.podman.podman_image:
+                     name: docker.io/httpd
+
+           - name: creating directoty for volume
+             file:
+                     path: /myapache
+                     state: directory
+
+           - name: creating html file
+             file:
+                     path: /myapache/index.html
+                     state: touch
+
+           - name: adding html code in file
+             copy:
+                     content: "hello all"
+                     dest: /myapache/index.html
+
+           - name: Runing httpd container
+             containers.podman.podman_container:
+                     name: mycontainer
+                     image: docker.io/httpd
+                     state: started
+                     detach: true
+                     ports:
+                            - "55580:80"
+                     volume:
+                             - /myapache:/usr/local/apache2/htdocs:z
